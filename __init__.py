@@ -1,0 +1,1 @@
+__all__ = ['fcn8_vgg', 'fcn16_vgg', 'fcn32_vgg', 'loss']

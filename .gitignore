@@ -64,3 +64,6 @@ target/
 
 # IDE
 .idea
+
+# Image files
+*.png

@@ -27,12 +27,22 @@ def loss(logits, labels, num_classes, head=None):
     Returns:
       loss: Loss tensor of type float.
     """
+    #with tf.name_scope('loss'):
+    #    return tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(
+    #        labels=labels,
+    #        logits=logits,
+    #        dim=-1,
+    #        name='cross_entropy'
+    #    ))
+    print('Logits shape: ', logits.get_shape())
+    print('Labels shape: ', labels.get_shape())
     with tf.name_scope('loss'):
-        logits = tf.reshape(logits, (-1, num_classes))
+        #logits = tf.reshape(logits, (-1, num_classes))
         epsilon = tf.constant(value=1e-4)
-        labels = tf.to_float(tf.reshape(labels, (-1, num_classes)))
+        #labels = tf.to_float(tf.reshape(labels, (-1, num_classes)))
 
         softmax = tf.nn.softmax(logits) + epsilon
+        print('Softmax shape: ', softmax.get_shape())
 
         if head is not None:
             cross_entropy = -tf.reduce_sum(tf.multiply(labels * tf.log(softmax),
@@ -40,10 +50,12 @@ def loss(logits, labels, num_classes, head=None):
         else:
             cross_entropy = -tf.reduce_sum(
                 labels * tf.log(softmax), reduction_indices=[1])
+        print('Cross Entropy Shape', cross_entropy.get_shape())
 
         cross_entropy_mean = tf.reduce_mean(cross_entropy,
                                             name='xentropy_mean')
         tf.add_to_collection('losses', cross_entropy_mean)
 
         loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
-    return loss
+        print('Loss Shape', cross_entropy_mean.get_shape())
+    return cross_entropy_mean
