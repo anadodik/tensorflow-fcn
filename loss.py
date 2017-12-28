@@ -27,35 +27,60 @@ def loss(logits, labels, num_classes, head=None):
     Returns:
       loss: Loss tensor of type float.
     """
-    #with tf.name_scope('loss'):
-    #    return tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(
-    #        labels=labels,
-    #        logits=logits,
-    #        dim=-1,
-    #        name='cross_entropy'
-    #    ))
-    print('Logits shape: ', logits.get_shape())
-    print('Labels shape: ', labels.get_shape())
-    with tf.name_scope('loss'):
-        #logits = tf.reshape(logits, (-1, num_classes))
-        epsilon = tf.constant(value=1e-4)
-        #labels = tf.to_float(tf.reshape(labels, (-1, num_classes)))
 
-        softmax = tf.nn.softmax(logits) + epsilon
-        print('Softmax shape: ', softmax.get_shape())
+    labels = tf.squeeze(labels, axis=[3])
+    ambiguous_pixels = tf.not_equal(labels, 21)
+    labels = tf.where(ambiguous_pixels, labels, tf.fill(dims=tf.shape(labels), value=1))
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=logits,
+        labels=labels,
+        name="entropy")
+    cross_entropy = tf.multiply(cross_entropy, tf.cast(ambiguous_pixels, tf.float32))
+    return tf.reduce_mean(cross_entropy)
+    # with tf.name_scope('cross_entropy_loss'):
+    #     softmax = tf.nn.softmax_cross_entropy_with_logits(
+    #         labels=labels,
+    #         logits=logits,
+    #         dim=-1,
+    #         name='cross_entropy'
+    #     )
+    #     return tf.reduce_mean(softmax)
+    # with tf.name_scope('loss'):
+    #     logits = tf.reshape(logits, (-1, num_classes))
+    #     epsilon = tf.constant(value=1e-4)
+    #     labels = tf.to_float(tf.reshape(labels, (-1, num_classes)))
 
-        if head is not None:
-            cross_entropy = -tf.reduce_sum(tf.multiply(labels * tf.log(softmax),
-                                           head), reduction_indices=[1])
-        else:
-            cross_entropy = -tf.reduce_sum(
-                labels * tf.log(softmax), reduction_indices=[1])
-        print('Cross Entropy Shape', cross_entropy.get_shape())
+    #     softmax = tf.nn.softmax(logits) + epsilon
 
-        cross_entropy_mean = tf.reduce_mean(cross_entropy,
-                                            name='xentropy_mean')
-        tf.add_to_collection('losses', cross_entropy_mean)
+    #     if head is not None:
+    #         cross_entropy = -tf.reduce_sum(tf.multiply(labels * tf.log(softmax),
+    #                                        head), reduction_indices=[1])
+    #     else:
+    #         cross_entropy = -tf.reduce_sum(
+    #             labels * tf.log(softmax), reduction_indices=[1])
 
-        loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
-        print('Loss Shape', cross_entropy_mean.get_shape())
-    return cross_entropy_mean
+    #     cross_entropy_mean = tf.reduce_mean(cross_entropy,
+    #                                         name='xentropy_mean')
+    #    tf.add_to_collection('losses', cross_entropy_mean)
+
+    #   loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
+    # return loss
+
+
+def get_eval_metric_ops(labels, predictions, params):
+    """Return a dict of the evaluation Ops.
+    Args:
+        labels (Tensor): Labels tensor for training and evaluation.
+        predictions (Tensor): Predictions Tensor.
+    Returns:
+        Dict of metric results keyed by name.
+    """
+    return {
+        'MeanIOU': tf.metrics.mean_iou(
+            labels=labels,
+            predictions=predictions,
+            num_classes=params.n_classes,
+            name='mean_iou')
+    }
+
+
