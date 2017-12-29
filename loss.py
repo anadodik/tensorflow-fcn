@@ -75,12 +75,34 @@ def get_eval_metric_ops(labels, predictions, params):
     Returns:
         Dict of metric results keyed by name.
     """
+    labels = tf.squeeze(labels, axis=[3])
+    ambiguous_pixels = tf.not_equal(labels, 21)
+    labels = tf.where(ambiguous_pixels, labels, tf.cast(predictions, tf.int32))
+    labels = tf.reshape(labels, [tf.shape(labels)[0], -1])
+    predictions = tf.reshape(predictions, [tf.shape(predictions)[0], -1])
     return {
         'MeanIOU': tf.metrics.mean_iou(
             labels=labels,
             predictions=predictions,
             num_classes=params.n_classes,
-            name='mean_iou')
+            name='mean_iou'),
+        'Accuracy': tf.metrics.accuracy(
+            labels=labels,
+            predictions=predictions,
+            name='accuracy'),
+        'Precision': tf.metrics.precision(
+            labels=labels,
+            predictions=predictions,
+            name='precision'),
+        'Recall': tf.metrics.recall(
+            labels=labels,
+            predictions=predictions,
+            name='precision'),
+        'MeanPerClassAccuracy': tf.metrics.mean_per_class_accuracy(
+            labels=labels,
+            predictions=predictions,
+            num_classes=params.n_classes,
+            name='mean_per_class_accuracy'),
     }
 
 
