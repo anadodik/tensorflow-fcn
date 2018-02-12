@@ -13,6 +13,7 @@ import tensorflow as tf
 VGG_MEAN = [103.939, 116.779, 123.68]
 
 
+
 class FCN8VGG:
 
     def __init__(self, vgg16_npy_path=None):
@@ -305,8 +306,8 @@ class FCN8VGG:
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
-        print('Layer name: %s' % name)
-        print('Layer shape: %s' % str(shape))
+        # print('Layer name: %s' % name)
+        # print('Layer shape: %s' % str(shape))
         var = tf.get_variable(name="filter", initializer=init, shape=shape)
         if not tf.get_variable_scope().reuse:
             weight_decay = tf.multiply(tf.nn.l2_loss(var), self.wd,
@@ -441,8 +442,8 @@ class FCN8VGG:
         return var
 
     def get_fc_weight_reshape(self, name, shape, num_classes=None):
-        print('Layer name: %s' % name)
-        print('Layer shape: %s' % shape)
+        # print('Layer name: %s' % name)
+        # print('Layer shape: %s' % shape)
         weights = self.data_dict[name][0]
         weights = weights.reshape(shape)
         if num_classes is not None:

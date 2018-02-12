@@ -32,7 +32,7 @@ class FCN32VGG:
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1').item()
         self.wd = 5e-4
-        print("npy file loaded")
+        # print("npy file loaded")
 
     def build(self, rgb, train=False, num_classes=20, random_init_fc8=False,
               debug=False):
@@ -247,11 +247,12 @@ class FCN32VGG:
                                shape=weights.shape)
 
     def get_conv_filter(self, name):
+        print(self.data_dict[name][0])
         init = tf.constant_initializer(value=self.data_dict[name][0],
                                        dtype=tf.float32)
         shape = self.data_dict[name][0].shape
-        print('Layer name: %s' % name)
-        print('Layer shape: %s' % str(shape))
+        # print('Layer name: %s' % name)
+        # print('Layer shape: %s' % str(shape))
         var = tf.get_variable(name="filter", initializer=init, shape=shape)
         if not tf.get_variable_scope().reuse:
             weight_decay = tf.multiply(tf.nn.l2_loss(var), self.wd,
@@ -369,8 +370,8 @@ class FCN32VGG:
                                initializer=initializer)
 
     def get_fc_weight_reshape(self, name, shape, num_classes=None):
-        print('Layer name: %s' % name)
-        print('Layer shape: %s' % shape)
+        # print('Layer name: %s' % name)
+        # print('Layer shape: %s' % shape)
         weights = self.data_dict[name][0]
         weights = weights.reshape(shape)
         if num_classes is not None:
@@ -392,6 +393,7 @@ def _activation_summary(x):
     Returns:
       nothing
     """
+    return
     # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
     # session. This helps the clarity of presentation on tensorboard.
     tensor_name = x.op.name

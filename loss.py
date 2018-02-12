@@ -29,7 +29,7 @@ def loss(logits, labels, num_classes, head=None):
     """
 
     labels = tf.squeeze(labels, axis=[3])
-    ambiguous_pixels = tf.not_equal(labels, 21)
+    ambiguous_pixels = tf.not_equal(labels, num_classes)
     labels = tf.where(ambiguous_pixels, labels, tf.fill(dims=tf.shape(labels), value=1))
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=logits,
@@ -76,7 +76,7 @@ def get_eval_metric_ops(labels, predictions, params):
         Dict of metric results keyed by name.
     """
     labels = tf.squeeze(labels, axis=[3])
-    ambiguous_pixels = tf.not_equal(labels, 21)
+    ambiguous_pixels = tf.not_equal(labels, params.n_classes)
     labels = tf.where(ambiguous_pixels, labels, tf.cast(predictions, tf.int32))
     labels = tf.reshape(labels, [tf.shape(labels)[0], -1])
     predictions = tf.reshape(predictions, [tf.shape(predictions)[0], -1])
