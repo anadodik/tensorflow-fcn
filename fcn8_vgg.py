@@ -33,7 +33,7 @@ class FCN8VGG:
 
         self.data_dict = np.load(vgg16_npy_path, encoding='latin1').item()
         self.wd = 5e-4
-        print("npy file loaded")
+        # print("npy file loaded")
 
     def build(self, rgb, train=False, num_classes=20, random_init_fc8=False,
               debug=False, use_dilated=False):
@@ -136,7 +136,7 @@ class FCN8VGG:
                                            num_classes=num_classes,
                                            relu=False)
 
-        self.pred = tf.argmax(self.score_fr, dimension=3)
+        self.pred = tf.argmax(self.score_fr, axis=3)
 
         self.upscore2 = self._upscore_layer(self.score_fr,
                                             shape=tf.shape(self.pool4),
@@ -162,7 +162,7 @@ class FCN8VGG:
                                              debug=debug, name='upscore32',
                                              ksize=16, stride=8)
 
-        self.pred_up = tf.argmax(self.upscore32, dimension=3)
+        self.pred_up = tf.argmax(self.upscore32, axis=3)
 
     def _max_pool(self, bottom, name, debug):
         pool = tf.nn.max_pool(bottom, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1],
