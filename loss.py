@@ -12,7 +12,7 @@ from __future__ import print_function
 import tensorflow as tf
 
 
-def loss(logits, labels, num_classes, head=None):
+def loss(logits, labels, params, head=None):
     """Calculate the loss from the logits and the labels.
 
     Args:
@@ -29,42 +29,14 @@ def loss(logits, labels, num_classes, head=None):
     """
 
     labels = tf.squeeze(labels, axis=[3])
-    ambiguous_pixels = tf.not_equal(labels, num_classes)
-    labels = tf.where(ambiguous_pixels, labels, tf.fill(dims=tf.shape(labels), value=1))
-    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-        logits=logits,
+    weights = 1.0
+    if params.has_ambiguous:
+        weights = tf.not_equal(labels, params.n_classes)
+    return tf.losses.sparse_softmax_cross_entropy(
         labels=labels,
-        name="entropy")
-    cross_entropy = tf.multiply(cross_entropy, tf.cast(ambiguous_pixels, tf.float32))
-    return tf.reduce_mean(cross_entropy)
-    # with tf.name_scope('cross_entropy_loss'):
-    #     softmax = tf.nn.softmax_cross_entropy_with_logits(
-    #         labels=labels,
-    #         logits=logits,
-    #         dim=-1,
-    #         name='cross_entropy'
-    #     )
-    #     return tf.reduce_mean(softmax)
-    # with tf.name_scope('loss'):
-    #     logits = tf.reshape(logits, (-1, num_classes))
-    #     epsilon = tf.constant(value=1e-4)
-    #     labels = tf.to_float(tf.reshape(labels, (-1, num_classes)))
-
-    #     softmax = tf.nn.softmax(logits) + epsilon
-
-    #     if head is not None:
-    #         cross_entropy = -tf.reduce_sum(tf.multiply(labels * tf.log(softmax),
-    #                                        head), reduction_indices=[1])
-    #     else:
-    #         cross_entropy = -tf.reduce_sum(
-    #             labels * tf.log(softmax), reduction_indices=[1])
-
-    #     cross_entropy_mean = tf.reduce_mean(cross_entropy,
-    #                                         name='xentropy_mean')
-    #    tf.add_to_collection('losses', cross_entropy_mean)
-
-    #   loss = tf.add_n(tf.get_collection('losses'), name='total_loss')
-    # return loss
+        logits=logits,
+        weights=weights
+    )
 
 
 def get_eval_metric_ops(labels, predictions, params):
@@ -76,32 +48,39 @@ def get_eval_metric_ops(labels, predictions, params):
         Dict of metric results keyed by name.
     """
     labels = tf.squeeze(labels, axis=[3])
-    ambiguous_pixels = tf.not_equal(labels, params.n_classes)
-    labels = tf.where(ambiguous_pixels, labels, tf.cast(predictions, tf.int32))
     labels = tf.reshape(labels, [tf.shape(labels)[0], -1])
     predictions = tf.reshape(predictions, [tf.shape(predictions)[0], -1])
+    weights = None
+    if params.has_ambiguous:
+        weights = tf.not_equal(labels, params.n_classes)
+        # labels = tf.where(ambiguous_pixels, labels, tf.cast(predictions, tf.int32))
     return {
         'MeanIOU': tf.metrics.mean_iou(
             labels=labels,
             predictions=predictions,
             num_classes=params.n_classes,
+            weights=weights,
             name='mean_iou'),
         'Accuracy': tf.metrics.accuracy(
             labels=labels,
             predictions=predictions,
+            weights=weights,
             name='accuracy'),
         'Precision': tf.metrics.precision(
             labels=labels,
             predictions=predictions,
+            weights=weights,
             name='precision'),
         'Recall': tf.metrics.recall(
             labels=labels,
             predictions=predictions,
+            weights=weights,
             name='precision'),
         'MeanPerClassAccuracy': tf.metrics.mean_per_class_accuracy(
             labels=labels,
             predictions=predictions,
             num_classes=params.n_classes,
+            weights=weights,
             name='mean_per_class_accuracy'),
     }
 
